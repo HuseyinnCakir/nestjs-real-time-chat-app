@@ -8,7 +8,6 @@ import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { TokenPayload } from '../../auth/interfaces/token-payload.interface';
 import { GetMessagesArgs } from './dto/get-messages.args';
 import { MessageCreatedArgs } from './dto/message-created.args';
-import { MessageDocument } from './entities/message.document';
 
 @Resolver(() => Message)
 export class MessagesResolver {
@@ -27,16 +26,17 @@ export class MessagesResolver {
   @UseGuards(GqlAuthGuard)
   async getMessages(
     @Args() getMessageArgs: GetMessagesArgs,
-  ): Promise<MessageDocument[]> {
+  ): Promise<Message[]> {
     return this.messagesService.getMessages(getMessageArgs);
   }
 
   @Subscription(() => Message, {
     filter: (payload, variables, context) => {
       const userId = context.req.user._id;
+      const message: Message = payload.messageCreated;
       return (
-        payload.messageCreated.chatId === variables.chatId &&
-        userId !== payload.messageCreated.userId
+        message.chatId === variables.chatId &&
+        userId !== message.user._id.toHexString()
       );
     },
   })
